@@ -1,0 +1,1 @@
+class MyComponent extends HTMLElement{connectedCallback(){this.innerHTML=`<h1>Hello World!</h1>`;this.style.color="green"}}customElements.define("my-component",MyComponent);
