@@ -16,6 +16,7 @@
     opacity: 1;
     font-family: Arial, Helvetica, sans-serif;
     box-shadow: 0px 0px 25px rgba(255, 255, 255, 0.12);
+    z-index: 9999999;
 }
 
 .chat-icon-moddev div {
@@ -32,6 +33,7 @@
     padding: 15px 25px;
     white-space: nowrap;
     line-height: 20px;
+    z-index: 9999999;
 }
 
 .chat-icon-message-moddev {
@@ -94,7 +96,7 @@
     
     will-change: opacity, visibility;
     opacity: 0;  
-    z-index: 99999;
+    z-index: 9999999;
     
 }
 
