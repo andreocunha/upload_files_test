@@ -1,13 +1,13 @@
 [
   {
-      "image": "solares.png",
+      "image": "https://dsbrastreio.com.br/logos/solares.png",
       "id": "01",
       "title": "Solares",
       "color": "#5012f9"
   },
   {
       "id": "02",
-      "image": "babitonga.png",
+      "image": "https://dsbrastreio.com.br/logos/babitonga.png",
       "title": "Babitonga",
       "color": "#5c194b"
   },
@@ -15,28 +15,28 @@
       "color": "#4bd5c4",
       "title": "Fernando Amorim",
       "id": "03",
-      "image": "fernando-amorim.png"
+      "image": "https://dsbrastreio.com.br/logos/fernando-amorim.png"
   },
   {
       "id": "04",
       "title": "Hurakan",
-      "image": "hurakan.png",
+      "image": "https://dsbrastreio.com.br/logos/hurakan.png",
       "color": "#405822"
   },
   {
       "color": "#3991b6",
       "title": "Vento Sul",
       "id": "05",
-      "image": "vento-sul.png"
+      "image": "https://dsbrastreio.com.br/logos/vento-sul.png"
   },
   {
       "id": "06",
       "title": "Leviatã",
-      "image": "leviata.png",
+      "image": "https://dsbrastreio.com.br/logos/leviata.png",
       "color": "#49484a"
   },
   {
-      "image": "zenite.png",
+      "image": "https://dsbrastreio.com.br/logos/zenite.png",
       "color": "#69b13f",
       "id": "07",
       "title": "Zenite"
@@ -44,7 +44,7 @@
   {
       "id": "08",
       "color": "#ec973e",
-      "image": "solaris.png",
+      "image": "https://dsbrastreio.com.br/logos/solaris.png",
       "title": "Solaris"
   }
 ]
