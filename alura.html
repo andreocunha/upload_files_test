@@ -103,7 +103,8 @@
 
         
       // send a post request to the server
-      fetch("https://api-gpt3-alura.herokuapp.com/conversation", {
+      // https://api-gpt3-alura.herokuapp.com/conversation
+      fetch("https://api-gpt3-alura.herokuapp.com/conversation/conversation", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -112,7 +113,7 @@
       })
         .then((res) => {
           const reader = res.body.getReader();
-          let result = "";
+          // let result = "";
           const read = () => {
             reader.read().then(({ done, value }) => {
               if (done) {
@@ -126,8 +127,9 @@
               let text = decoder.decode(value);
               // console.log(text);
               // console.log("[received]: " + text);
-              result += text;
-              document.getElementById('stream').innerHTML = marked.parse(result);
+              // result += text;
+              // document.getElementById('stream').innerHTML = marked.parse(result);
+              document.getElementById('stream').innerHTML = text;
               read();
             });
           };
