@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
   <title>Document</title>
 
   <style>
@@ -83,8 +84,27 @@
 
   <div id="stream"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
+    // Cria um objeto de conexão Socket.io com o servidor em localhost:3000
+    const socket = io("http://165.227.96.21");
+
+    // Adiciona um listener de evento para o evento "connect"
+    socket.on("connect", () => {
+      console.log("Conectado ao servidor Socket.io!");
+    });
+
+    socket.on("response", (message) => {
+      // console.log("Mensagem recebida do servidor:", message);
+      document.getElementById('stream').innerHTML = message;
+    });
+
+    socket.on("end", (e) => {
+      console.log("Conexão encerrada");
+      const button = document.getElementById("send");
+      button.innerHTML = "Pesquisar";
+      button.disabled = false;
+    });
+
     function getAnswer() {
       // add an git in button
       const button = document.getElementById("send");
@@ -98,45 +118,8 @@
         button.disabled = false;
         return;
       }
-
       document.getElementById('stream').innerHTML = "";
-
-        
-      // send a post request to the server
-      // https://api-gpt3-alura.herokuapp.com/conversation
-      // https://shotadvisor.com.br/conversation
-      fetch("https://shotadvisor.com.br/conversation", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message: inputText, stream: true }),
-      })
-        .then((res) => {
-          const reader = res.body.getReader();
-          // let result = "";
-          const read = () => {
-            reader.read().then(({ done, value }) => {
-              if (done) {
-                console.log("[end]");
-                button.innerHTML = "Pesquisar";
-                button.disabled = false;
-                return;
-              }
-
-              const decoder = new TextDecoder();
-              let text = decoder.decode(value);
-              // console.log(text);
-              // console.log("[received]: " + text);
-              // result += text;
-              // document.getElementById('stream').innerHTML = marked.parse(result);
-              document.getElementById('stream').innerHTML = text;
-              read();
-            });
-          };
-
-          read();
-        });
+      socket.emit("prompt", inputText);
     }
 
     // listen to the button click
