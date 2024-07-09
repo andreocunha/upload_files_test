@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fabric.js Example</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/4.5.0/fabric.min.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #canvas-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 75vh;
+            width: 100vh;
+        }
+        #canvas {
+            border: 1px solid green;
+            background-color: black;
+        }
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+        }
+    </style>
+</head>
+<body>
+<div id="controls">
+    <button id="toggleAddShape">Ativar Adição de Formas</button>
+    <button id="toggleDrawing">Ativar Desenho Livre</button>
+</div>
+<div id="canvas-container">
+    <canvas id="canvas"></canvas>
+</div>
+<script>
+    var canvas = new fabric.Canvas('canvas');
+    var addShapeMode = false;
+    var drawingMode = false;
+    let overlay;
+
+    const MAX_ZOOM = 20;
+    const MIN_ZOOM = 1;
+
+    document.getElementById('toggleAddShape').onclick = function() {
+        addShapeMode = !addShapeMode;
+        drawingMode = false;
+        canvas.isDrawingMode = drawingMode;
+        document.getElementById('toggleDrawing').textContent = 'Ativar Desenho Livre';
+        this.textContent = addShapeMode ? 'Desativar Adição de Formas' : 'Ativar Adição de Formas';
+    };
+
+    document.getElementById('toggleDrawing').onclick = function() {
+        drawingMode = !drawingMode;
+        addShapeMode = false;
+        canvas.isDrawingMode = drawingMode;
+        canvas.freeDrawingBrush.color = 'rgba(0, 255, 255, 1.0)';
+        canvas.freeDrawingBrush.width = 2;
+        document.getElementById('toggleAddShape').textContent = 'Ativar Adição de Formas';
+        this.textContent = drawingMode ? 'Desativar Desenho Livre' : 'Ativar Desenho Livre';
+    };
+
+    function resizeCanvas() {
+        var container = document.getElementById('canvas-container');
+        canvas.setWidth(container.clientWidth);
+        canvas.setHeight(container.clientHeight);
+        canvas.calcOffset();
+        centerAndScaleImage();
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    var imageObj;
+
+    fabric.Image.fromURL('./spray.webp', function(img) {
+        imageObj = img;
+        centerAndScaleImage();
+        img.selectable = false;
+        canvas.add(img);
+        canvas.sendToBack(img);
+
+        overlay = new fabric.Rect({
+            left: 0,
+            top: 0,
+            width: canvas.width,
+            height: canvas.height,
+            fill: 'rgba(0, 0, 0, 0.7)',
+            selectable: false,
+            evented: false
+        });
+
+        canvas.add(overlay);
+
+        canvas.renderAll();
+    });
+
+    function centerAndScaleImage() {
+        if (!imageObj) return;
+
+        var canvasAspect = canvas.width / canvas.height;
+        var imgAspect = imageObj.width / imageObj.height;
+        var scaleFactor;
+
+        if (canvasAspect >= imgAspect) {
+            scaleFactor = canvas.height / imageObj.height;
+        } else {
+            scaleFactor = canvas.width / imageObj.width;
+        }
+
+        imageObj.set({
+            left: canvas.width / 2,
+            top: canvas.height / 2,
+            originX: 'center',
+            originY: 'center',
+            scaleX: scaleFactor,
+            scaleY: scaleFactor,
+        });
+
+        canvas.renderAll();
+    }
+
+    function smoothCenterViewport() {
+        var vpt = canvas.viewportTransform;
+        if (!vpt) return;
+
+        var width = canvas.getWidth(),
+            height = canvas.getHeight(),
+            zoom = canvas.getZoom(),
+            zoomWidth = width / zoom,
+            zoomHeight = height / zoom,
+            offsetX = (width - zoomWidth) / 2,
+            offsetY = (height - zoomHeight) / 2;
+
+        var startX = vpt[4],
+            startY = vpt[5],
+            deltaX = offsetX - startX,
+            deltaY = offsetY - startY,
+            duration = 150,
+            startTime = performance.now();
+
+        function animate(time) {
+            var elapsed = time - startTime;
+            var progress = Math.min(elapsed / duration, 1);
+
+            vpt[4] = startX + deltaX * progress;
+            vpt[5] = startY + deltaY * progress;
+
+            canvas.requestRenderAll();
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
+        }
+
+        requestAnimationFrame(animate);
+
+        canvas.off('mouse:wheel', onMouseWheel);
+        setTimeout(() => {
+            canvas.on('mouse:wheel', onMouseWheel);
+        }, duration);
+    }
+
+    function onMouseWheel(opt) {
+        var delta = opt.e.deltaY;
+        var zoom = canvas.getZoom();
+        zoom *= 0.999 ** delta;
+        if (zoom > MAX_ZOOM) zoom = MAX_ZOOM;
+        if (zoom < MIN_ZOOM) zoom = MIN_ZOOM;
+        canvas.zoomToPoint({ x: canvas.width / 2, y: canvas.height / 2 }, zoom);
+        opt.e.preventDefault();
+        opt.e.stopPropagation();
+
+        if (zoom === MIN_ZOOM) {
+            smoothCenterViewport();
+        }
+    }
+
+    canvas.on('mouse:wheel', onMouseWheel);
+
+    canvas.on('mouse:down', function(opt) {
+        if(!opt.e) return;
+
+        if (addShapeMode) {
+            var pointer = canvas.getPointer(opt.e);
+            var circle = new fabric.Circle({
+                radius: 20,
+                fill: 'rgba(255, 255, 255, 0)', // Transparente
+                stroke: 'rgba(0, 255, 255, 1.0)', // Contorno neon
+                strokeWidth: 2,
+                left: pointer.x,
+                top: pointer.y,
+                originX: 'center',
+                originY: 'center',
+                shadow: new fabric.Shadow({
+                    color: 'rgba(0, 255, 255, 1)',
+                    blur: 30
+                })
+            });
+            canvas.add(circle);
+            
+        } else if (!drawingMode) {
+            var activeObject = canvas.getActiveObject();
+            if (!activeObject) {
+                this.isDragging = true;
+                this.lastPosX = opt.e.clientX || opt.e.touches[0].clientX;
+                this.lastPosY = opt.e.clientY || opt.e.touches[0].clientY;
+                canvas.selection = false;
+            }
+        }
+    });
+
+    canvas.on('mouse:move', function(opt) {
+        if (this.isDragging) {
+            var e = opt.e;
+            var vpt = this.viewportTransform;
+            var clientX = e.clientX || e.touches[0].clientX;
+            var clientY = e.clientY || e.touches[0].clientY;
+            vpt[4] += clientX - this.lastPosX;
+            vpt[5] += clientY - this.lastPosY;
+            this.requestRenderAll();
+            this.lastPosX = clientX;
+            this.lastPosY = clientY;
+        }
+    });
+
+    canvas.on('mouse:up', function(opt) {
+        this.isDragging = false;
+        canvas.selection = true;
+        if (canvas.getZoom() === MIN_ZOOM) {
+            smoothCenterViewport();
+        }
+        if (drawingMode) {
+            finalizeDrawing();
+        }
+    });
+
+    function updateClipPath() {
+        const objectsCanvas = canvas.getObjects().slice(2);
+        console.log(objectsCanvas);
+        if(objectsCanvas.length === 0) {
+            console.log('No objects to clip');
+            overlay?.set({
+                clipPath: null
+            });
+            return;
+        }
+
+        const allObjectsFormatted = objectsCanvas.map(obj => {
+            if (obj.type === 'circle') {
+                return new fabric.Circle({
+                    ...obj,
+                    fill: 'rgba(255, 255, 255, 1)',
+                    selectable: true,
+                    evented: true,
+                    shadow: null
+                });
+            } else if (obj.type === 'path') {
+                return new fabric.Path(obj.path, {
+                    ...obj,
+                    fill: 'rgba(255, 255, 255, 1)',
+                    selectable: true,
+                    evented: true,
+                    shadow: null
+                });
+            }
+        });
+
+        var clipGroup = new fabric.Group([...allObjectsFormatted], {
+            inverted: true,
+            selectable: false,
+            evented: false,
+            absolutePositioned: true,
+        });
+
+        overlay.set({
+            clipPath: clipGroup
+        });
+
+        canvas.requestRenderAll();
+    }
+
+    canvas.on('object:modified', updateClipPath);
+    canvas.on('object:removed', updateClipPath);
+    canvas.on('object:added', updateClipPath);
+    canvas.on('object:scaling', updateClipPath);
+    canvas.on('object:moving', updateClipPath);
+    canvas.on('object:rotating', updateClipPath);
+
+    function finalizeDrawing() {
+        canvas.isDrawingMode = false;
+        var objects = canvas.getObjects('path');
+        if (objects.length > 0) {
+            var lastPath = objects[objects.length - 1];
+            var path = new fabric.Path(lastPath.path, {
+                fill: 'rgba(255, 255, 255, 0)', // Transparente
+                stroke: 'rgba(0, 255, 255, 1.0)', // Contorno neon
+                strokeWidth: 2,
+                selectable: true,
+                shadow: new fabric.Shadow({
+                    color: 'rgba(0, 255, 255, 1)',
+                    blur: 30
+                })
+            });
+            canvas.remove(lastPath);
+            canvas.add(path);
+            canvas.renderAll();
+        }
+        canvas.isDrawingMode = true;
+        updateClipPath();
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            var activeObject = canvas.getActiveObject();
+            if (activeObject) {
+                canvas.remove(activeObject);
+            }
+        }
+    });
+
+    function addDeleteBtnHandler(eventData, transform) {
+        var target = transform.target;
+        canvas.remove(target);
+        canvas.requestRenderAll();
+    }
+
+    fabric.Object.prototype.controls.deleteControl = new fabric.Control({
+        x: 0.5,
+        y: -0.5,
+        offsetY: -16,
+        cursorStyle: 'pointer',
+        mouseUpHandler: addDeleteBtnHandler,
+        render: renderIcon,
+        cornerSize: 24
+    });
+
+    function renderIcon(ctx, left, top, styleOverride, fabricObject) {
+        var size = this.cornerSize / 1.5;
+        ctx.save();
+        ctx.translate(left, top);
+        ctx.rotate(fabric.util.degreesToRadians(fabricObject.angle));
+        ctx.drawImage(img, -size / 2, -size / 2, size, size);
+        ctx.restore();
+    }
+
+    var img = new Image();
+    img.src = './close.png';
+</script>
+</body>
+</html>
